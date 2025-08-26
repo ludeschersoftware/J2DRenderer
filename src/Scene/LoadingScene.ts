@@ -2,7 +2,7 @@ import AbstractScene from "../Abstract/AbstractScene";
 
 class LoadingScene extends AbstractScene {
     public static GetId(): string {
-        return "tsgame-loading-scene";
+        return "default-loading-scene";
     }
 
     public override Initialize(): void {

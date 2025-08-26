@@ -9,9 +9,9 @@ import AbstractScene from "./Abstract/AbstractScene";
 import { Mat3, Vec2 } from "gl-matrix";
 import InputStateInterface from "./Interfaces/InputStateInterface";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
-import GameConfigInterface from "./Interfaces/GameConfigInterface";
 import CanvasInterface from "./Interfaces/CanvasInterface";
 import { CreateEventName } from "./Utils/EventHelper";
+import BaseConfigInterface from "./Interfaces/BaseConfigInterface";
 
 class Renderer {
     public static CONFIG: GlobalConfigInterface;
@@ -51,7 +51,7 @@ class Renderer {
         this.m_resize_ticktock = new TickTock(this.handleResize, 500);
     }
 
-    public Initialize(container: HTMLElement, config: GameConfigInterface): void {
+    public Initialize(container: HTMLElement, config: BaseConfigInterface): void {
         const CONTAINER_RECT: DOMRect = container.getBoundingClientRect();
 
         Renderer.CONFIG = Object.assign({
@@ -428,7 +428,7 @@ class Renderer {
              */
 
             const NEW_CANVAS_ELEMENT: HTMLCanvasElement = createElement('canvas', {
-                className: 'tsgame-canvas',
+                className: '2drenderer-canvas',
                 width: this.m_container!.offsetWidth,
                 height: this.m_container!.offsetHeight,
                 style: {
