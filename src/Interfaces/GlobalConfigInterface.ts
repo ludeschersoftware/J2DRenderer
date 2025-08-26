@@ -1,7 +1,7 @@
-import BaseConfigInterface from "./BaseConfigInterface";
+import InitConfigInterface from "./InitConfigInterface";
 import RectangleInterface from "./RectangleInterface";
 
-interface GlobalConfigInterface extends BaseConfigInterface {
+interface GlobalConfigInterface extends InitConfigInterface {
     Canvas: RectangleInterface;
     Scale: number;
 }
