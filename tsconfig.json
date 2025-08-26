@@ -1,0 +1,39 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "declarationMap": true,
+        "module": "ESNext",
+        "outDir": "dist",
+        "removeComments": true,
+        "rootDir": "src",
+        "sourceMap": true,
+        "target": "ESNext",
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strict": true,
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "Node",
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        "lib": [
+            "DOM",
+            "ESNext"
+        ],
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "exactOptionalPropertyTypes": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictPropertyInitialization": true,
+        "noFallthroughCasesInSwitch": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

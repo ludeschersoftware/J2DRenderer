@@ -1,0 +1,40 @@
+{
+    "name": "@ludeschersoftware/2drenderer",
+    "version": "1.0.0",
+    "description": "A lightweight and efficient 2D rendering engine built specifically for the CanvasRenderingContext2D API",
+    "publishConfig": {
+        "access": "public"
+    },
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "types": "index.ts",
+    "exports": {
+        ".": {
+            "import": "./index.js",
+            "types": "./index.ts"
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ludeschersoftware/J2DRenderer.git"
+    },
+    "keywords": [
+        "canvas"
+    ],
+    "author": "Johannes Ludescher",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ludeschersoftware/J2DRenderer/issues"
+    },
+    "homepage": "https://github.com/ludeschersoftware/J2DRenderer#readme",
+    "dependencies": {
+        "@ludeschersoftware/dom": "^1.0.3",
+        "@ludeschersoftware/ref": "^1.0.0",
+        "@ludeschersoftware/struct": "^1.1.0",
+        "@ludeschersoftware/ticktock": "^1.0.1",
+        "@ludeschersoftware/utils": "^1.0.0",
+        "gl-matrix": "4.0.0-beta.2"
+    }
+}
