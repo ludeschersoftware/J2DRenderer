@@ -13,9 +13,10 @@ import CanvasInterface from "./Interfaces/CanvasInterface";
 import { CreateEventName } from "./Utils/EventHelper";
 import InitConfigInterface from "./Interfaces/InitConfigInterface";
 import SceneEvent from "./SceneEvent";
+import { initializeConfig, setConfig } from "./Config";
 
 class Renderer {
-    private m_global_config: GlobalConfigInterface; // Refactor => move all prop HERE!
+    private m_global_config: GlobalConfigInterface;
     private m_scenes: Map<string, AbstractScene>;
     private m_now: number;
     private m_active_scene: AbstractScene | undefined;
@@ -29,6 +30,8 @@ class Renderer {
     private m_resize_ticktock: TickTock;
 
     constructor(config: InitConfigInterface) {
+        initializeConfig();
+
         this.m_scenes = new Map();
         this.m_now = 0;
         this.m_active_scene = undefined;
@@ -50,13 +53,15 @@ class Renderer {
 
         this.m_global_config = Object.assign({
             Canvas: {
-                Width: config.Container.offsetWidth,
-                Height: config.Container.offsetHeight,
-                X: CONTAINER_RECT.x,
-                Y: CONTAINER_RECT.y,
+                width: config.Container.offsetWidth,
+                height: config.Container.offsetHeight,
+                x: CONTAINER_RECT.x,
+                y: CONTAINER_RECT.y,
             },
             Scale: 1,
         }, config);
+
+        setConfig(config.Id, this.m_global_config);
 
         this.m_loading_scene_promise = this.initializeSceneAsync(new LoadingScene(LoadingScene.GetId()));
         this.m_event_layer_element = createElement('div', {
@@ -254,10 +259,10 @@ class Renderer {
             CANVAS.Element.height = CONTAINER_RECT.height * DPR;
         }
 
-        this.m_global_config.Canvas.Width = CONTAINER_RECT.width * DPR;
-        this.m_global_config.Canvas.Height = CONTAINER_RECT.height * DPR;
-        this.m_global_config.Canvas.X = CONTAINER_RECT.x;
-        this.m_global_config.Canvas.Y = CONTAINER_RECT.y;
+        this.m_global_config.Canvas.width = CONTAINER_RECT.width * DPR;
+        this.m_global_config.Canvas.height = CONTAINER_RECT.height * DPR;
+        this.m_global_config.Canvas.x = CONTAINER_RECT.x;
+        this.m_global_config.Canvas.y = CONTAINER_RECT.y;
         this.m_global_config.Scale = DPR;
 
         /**
@@ -384,8 +389,8 @@ class Renderer {
         e.preventDefault();
         e.stopPropagation();
 
-        this.m_input_state.MousePositionCamera.x = ((e.clientX - this.m_global_config.Canvas.X) * this.m_global_config.Scale);
-        this.m_input_state.MousePositionCamera.y = ((e.clientY - this.m_global_config.Canvas.Y) * this.m_global_config.Scale);
+        this.m_input_state.MousePositionCamera.x = ((e.clientX - this.m_global_config.Canvas.x) * this.m_global_config.Scale);
+        this.m_input_state.MousePositionCamera.y = ((e.clientY - this.m_global_config.Canvas.y) * this.m_global_config.Scale);
     }
 
     private canvasKeyDown(e: KeyboardEvent): void {
@@ -505,10 +510,10 @@ class Renderer {
 
         const CONTAINER_RECT: DOMRect = this.m_global_config.Container.getBoundingClientRect();
 
-        this.m_global_config.Canvas.Width = this.m_global_config.Container.offsetWidth;
-        this.m_global_config.Canvas.Height = this.m_global_config.Container.offsetHeight;
-        this.m_global_config.Canvas.X = CONTAINER_RECT.x;
-        this.m_global_config.Canvas.Y = CONTAINER_RECT.y;
+        this.m_global_config.Canvas.width = this.m_global_config.Container.offsetWidth;
+        this.m_global_config.Canvas.height = this.m_global_config.Container.offsetHeight;
+        this.m_global_config.Canvas.x = CONTAINER_RECT.x;
+        this.m_global_config.Canvas.y = CONTAINER_RECT.y;
         this.m_global_config.Scale = 1;
 
         this.m_event_layer_element!.style.width = `${this.m_global_config.Container.offsetWidth}px`;

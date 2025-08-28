@@ -1,8 +1,8 @@
+import { Box } from "@ludeschersoftware/types";
 import InitConfigInterface from "./InitConfigInterface";
-import RectangleInterface from "./RectangleInterface";
 
 interface GlobalConfigInterface extends InitConfigInterface {
-    Canvas: RectangleInterface;
+    Canvas: Box;
     Scale: number;
 }
 

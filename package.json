@@ -36,5 +36,8 @@
         "@ludeschersoftware/ticktock": "^1.0.1",
         "@ludeschersoftware/utils": "^1.0.0",
         "gl-matrix": "4.0.0-beta.2"
+    },
+    "devDependencies": {
+        "@ludeschersoftware/types": "^1.0.0"
     }
 }

@@ -1,5 +1,5 @@
 interface BaseConfigInterface {
-    Id?: string;
+    Id: string;
 }
 
 export default BaseConfigInterface;

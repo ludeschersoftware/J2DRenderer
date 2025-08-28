@@ -27,6 +27,11 @@
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/ticktock/-/ticktock-1.0.1.tgz#d2fcad4d60859d517380092797873012bb9240b6"
   integrity sha512-LbimU+ETG9u88PT4PrQVm5lYYmwuiATKFVYdgOcGJtIvpM7xZ3/3Rh4Le4CRShWpNgG/KLYfPfBGQl/75L+/4A==
 
+"@ludeschersoftware/types@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@ludeschersoftware/types/-/types-1.0.0.tgz#62822ef51fe526971e50355d717c73c5adc84693"
+  integrity sha512-ks9E2ucJDUMotmguucMeh8A8xZHSfKWXXQG7ycD02k9NWZn+fZeUMChdgq4qNFOjl2c2RZDxg8S691TvVop6nA==
+
 "@ludeschersoftware/utils@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/utils/-/utils-1.0.0.tgz#5851eae44e971581585803e015adec0892eefc70"

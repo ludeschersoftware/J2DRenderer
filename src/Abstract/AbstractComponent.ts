@@ -1,46 +1,46 @@
+import { Box } from "@ludeschersoftware/types";
 import InputStateInterface from "../Interfaces/InputStateInterface";
-import RectangleInterface from "../Interfaces/RectangleInterface";
 import ContentManager from "../Manager/ContentManager";
 
-abstract class AbstractComponent implements RectangleInterface {
-    public Width: number;
-    public Height: number;
+abstract class AbstractComponent implements Box {
+    public width: number;
+    public height: number;
 
     private m_x: number;
     private m_y: number;
     private m_parent_component: AbstractComponent | undefined;
     private m_child_components: AbstractComponent[];
 
-    constructor(rectangle: RectangleInterface) {
-        this.Width = rectangle.Width;
-        this.Height = rectangle.Height;
-        this.m_x = rectangle.X;
-        this.m_y = rectangle.Y;
+    constructor(box: Box) {
+        this.width = box.width;
+        this.height = box.height;
+        this.m_x = box.x;
+        this.m_y = box.y;
         this.m_parent_component = undefined;
         this.m_child_components = [];
     }
 
-    public get X(): number {
+    public get x(): number {
         if (this.m_parent_component === undefined) {
             return this.m_x;
         }
 
-        return this.m_x + this.m_parent_component.X;
+        return this.m_x + this.m_parent_component.x;
     }
 
-    public set X(x: number) {
+    public set x(x: number) {
         this.m_x = x;
     }
 
-    public get Y(): number {
+    public get y(): number {
         if (this.m_parent_component === undefined) {
             return this.m_y;
         }
 
-        return this.m_y + this.m_parent_component.Y;
+        return this.m_y + this.m_parent_component.y;
     }
 
-    public set Y(y: number) {
+    public set y(y: number) {
         this.m_y = y;
     }
 
