@@ -8,10 +8,10 @@ class ContentManager {
     private static _CACHE: Map<number, WeakRef<ImageBitmap>> = new Map();
     private static _CONTENT_LOAD_COUNT: Map<number, Ref<number>> = new Map();
 
-    private m_loading_content: Map<string, Promise<void>>;
+    private m_loading: Map<string, Promise<void>>;
 
     constructor() {
-        this.m_loading_content = new Map();
+        this.m_loading = new Map();
     }
 
     public LoadFromSrc(src: string, type: ContentLoadType = ContentLoadType.Default): Texture2D {
@@ -19,20 +19,20 @@ class ContentManager {
         const RESULT_PROMISE: Promise<void> = this.load(RESULT, type === ContentLoadType.Cache);
 
         if (type !== ContentLoadType.Lazy) {
-            this.m_loading_content.set(RESULT.Id, RESULT_PROMISE);
+            this.m_loading.set(RESULT.Id, RESULT_PROMISE);
         }
 
         return RESULT;
     }
 
     public async WaitLoadFulfilledAsync(): Promise<PromiseSettledResult<void>[]> {
-        return Promise.allSettled(Array.from(this.m_loading_content.values()));
+        return Promise.allSettled(Array.from(this.m_loading.values()));
     }
 
     private getUniqContentId(): string {
         let result: string = CreateUniqHash(50);
 
-        while (this.m_loading_content.has(result) === true) {
+        while (this.m_loading.has(result) === true) {
             result = CreateUniqHash(30);
         }
 
@@ -81,7 +81,6 @@ class ContentManager {
                     resolve();
                 })
                     .catch((e) => {
-                        console.error(e);
                         reject(e);
                     });
             };

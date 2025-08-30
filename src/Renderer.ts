@@ -10,13 +10,13 @@ import { Mat3, Vec2 } from "gl-matrix";
 import InputStateInterface from "./Interfaces/InputStateInterface";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
 import CanvasInterface from "./Interfaces/CanvasInterface";
-import { CreateEventName } from "./Utils/EventHelper";
 import InitConfigInterface from "./Interfaces/InitConfigInterface";
-import SceneEvent from "./SceneEvent";
 import { initializeConfig, setConfig } from "./Config";
+import EventHub from "./EventHub";
+import Logger from "./Logger";
 
 class Renderer {
-    private m_global_config: GlobalConfigInterface;
+    private m_config: GlobalConfigInterface;
     private m_scenes: Map<string, AbstractScene>;
     private m_now: number;
     private m_active_scene: AbstractScene | undefined;
@@ -51,7 +51,9 @@ class Renderer {
 
         const CONTAINER_RECT: DOMRect = config.Container.getBoundingClientRect();
 
-        this.m_global_config = Object.assign({
+        const { logger, ...rest } = config;
+
+        this.m_config = Object.assign({
             Canvas: {
                 width: config.Container.offsetWidth,
                 height: config.Container.offsetHeight,
@@ -59,9 +61,11 @@ class Renderer {
                 y: CONTAINER_RECT.y,
             },
             Scale: 1,
-        }, config);
+            EventHub: new EventHub(config.Container),
+            Logger: new Logger(logger),
+        }, rest);
 
-        setConfig(config.Id, this.m_global_config);
+        setConfig(config.Id, this.m_config);
 
         this.m_loading_scene_promise = this.initializeSceneAsync(new LoadingScene(LoadingScene.GetId()));
         this.m_event_layer_element = createElement('div', {
@@ -81,7 +85,7 @@ class Renderer {
 
         document.addEventListener('contextmenu', e => e?.cancelable && e.preventDefault());
 
-        config.Container.addEventListener(CEventType.LoadScene, this.handleLoadScene);
+        this.m_config.EventHub.listen(CEventType.LoadScene, this.handleLoadScene);
 
         this.m_event_layer_element.addEventListener("mousedown", (e) => this.canvasMouseDown(e));
         this.m_event_layer_element.addEventListener("mouseup", (e) => this.canvasMouseUp(e));
@@ -126,7 +130,7 @@ class Renderer {
                     this.m_currently_initializing_scene_id = undefined;
                 })
                 .catch((e: any) => {
-                    console.error(e);
+                    this.m_config.Logger.error(e);
                 });
         }
     }
@@ -137,7 +141,7 @@ class Renderer {
         const LOADING_SCENE: any[] | (AbstractScene | null)[] = await ResolveAsync<AbstractScene>(this.m_loading_scene_promise!);
 
         if (LOADING_SCENE[0] === null) {
-            console.error(LOADING_SCENE[1]);
+            this.m_config.Logger.error(LOADING_SCENE[1]);
             throw new Error("TODO => handle error...");
         }
 
@@ -246,7 +250,7 @@ class Renderer {
          */
 
         const DPR: number = window.devicePixelRatio;
-        const CONTAINER_RECT: DOMRect = this.m_global_config.Container.getBoundingClientRect();
+        const CONTAINER_RECT: DOMRect = this.m_config.Container.getBoundingClientRect();
 
         /**
          * Set the "actual" size of the canvas
@@ -259,11 +263,11 @@ class Renderer {
             CANVAS.Element.height = CONTAINER_RECT.height * DPR;
         }
 
-        this.m_global_config.Canvas.width = CONTAINER_RECT.width * DPR;
-        this.m_global_config.Canvas.height = CONTAINER_RECT.height * DPR;
-        this.m_global_config.Canvas.x = CONTAINER_RECT.x;
-        this.m_global_config.Canvas.y = CONTAINER_RECT.y;
-        this.m_global_config.Scale = DPR;
+        this.m_config.Canvas.width = CONTAINER_RECT.width * DPR;
+        this.m_config.Canvas.height = CONTAINER_RECT.height * DPR;
+        this.m_config.Canvas.x = CONTAINER_RECT.x;
+        this.m_config.Canvas.y = CONTAINER_RECT.y;
+        this.m_config.Scale = DPR;
 
         /**
          * Scale the context to ensure correct drawing operations
@@ -389,8 +393,8 @@ class Renderer {
         e.preventDefault();
         e.stopPropagation();
 
-        this.m_input_state.MousePositionCamera.x = ((e.clientX - this.m_global_config.Canvas.x) * this.m_global_config.Scale);
-        this.m_input_state.MousePositionCamera.y = ((e.clientY - this.m_global_config.Canvas.y) * this.m_global_config.Scale);
+        this.m_input_state.MousePositionCamera.x = ((e.clientX - this.m_config.Canvas.x) * this.m_config.Scale);
+        this.m_input_state.MousePositionCamera.y = ((e.clientY - this.m_config.Canvas.y) * this.m_config.Scale);
     }
 
     private canvasKeyDown(e: KeyboardEvent): void {
@@ -425,8 +429,8 @@ class Renderer {
 
             const NEW_CANVAS_ELEMENT: HTMLCanvasElement = createElement('canvas', {
                 className: '2drenderer-canvas',
-                width: this.m_global_config.Container.offsetWidth,
-                height: this.m_global_config.Container.offsetHeight,
+                width: this.m_config.Container.offsetWidth,
+                height: this.m_config.Container.offsetHeight,
                 style: {
                     position: 'absolute',
                     top: '0px',
@@ -449,7 +453,7 @@ class Renderer {
                 Element: NEW_CANVAS_ELEMENT,
             });
 
-            this.m_global_config.Container.prepend(NEW_CANVAS_ELEMENT);
+            this.m_config.Container.prepend(NEW_CANVAS_ELEMENT);
         }
 
         this.optimizeCanvas();
@@ -504,40 +508,35 @@ class Renderer {
     }
 
     private handleResize = (): void => {
-        this.m_global_config.Container.dispatchEvent(new SceneEvent(CreateEventName(CEventType.BeforeResizeReInitialization, this.m_global_config.Id), {
-            detail: this.m_active_scene?.Id,
-        }));
+        this.m_config.EventHub.send(CEventType.BeforeResizeReInitialization, this.m_active_scene?.Id);
 
-        const CONTAINER_RECT: DOMRect = this.m_global_config.Container.getBoundingClientRect();
+        const CONTAINER_RECT: DOMRect = this.m_config.Container.getBoundingClientRect();
 
-        this.m_global_config.Canvas.width = this.m_global_config.Container.offsetWidth;
-        this.m_global_config.Canvas.height = this.m_global_config.Container.offsetHeight;
-        this.m_global_config.Canvas.x = CONTAINER_RECT.x;
-        this.m_global_config.Canvas.y = CONTAINER_RECT.y;
-        this.m_global_config.Scale = 1;
+        this.m_config.Canvas.width = this.m_config.Container.offsetWidth;
+        this.m_config.Canvas.height = this.m_config.Container.offsetHeight;
+        this.m_config.Canvas.x = CONTAINER_RECT.x;
+        this.m_config.Canvas.y = CONTAINER_RECT.y;
+        this.m_config.Scale = 1;
 
-        this.m_event_layer_element!.style.width = `${this.m_global_config.Container.offsetWidth}px`;
-        this.m_event_layer_element!.style.height = `${this.m_global_config.Container.offsetHeight}px`;
+        this.m_event_layer_element!.style.width = `${this.m_config.Container.offsetWidth}px`;
+        this.m_event_layer_element!.style.height = `${this.m_config.Container.offsetHeight}px`;
 
         if (this.m_active_scene?.Camera !== undefined) {
-            this.m_active_scene!.Camera!.ResizeCanvas(new Vec2(this.m_global_config.Container.clientWidth, this.m_global_config.Container.clientHeight));
+            this.m_active_scene!.Camera!.ResizeCanvas(new Vec2(this.m_config.Container.clientWidth, this.m_config.Container.clientHeight));
         }
 
         this.optimizeCanvas();
 
-        this.m_global_config.Container.dispatchEvent(new SceneEvent(CreateEventName(CEventType.AfterResizeReInitialization, this.m_global_config.Id), {
-            detail: this.m_active_scene?.Id,
-        }));
+        this.m_config.EventHub.send(CEventType.AfterResizeReInitialization, this.m_active_scene?.Id);
     };
 
-    private handleLoadScene = (e: Event): void => {
-        const SCENE_EVENT: SceneEvent = (e as SceneEvent);
-
-        if (typeof SCENE_EVENT.detail !== "string") {
+    private handleLoadScene = (scene_id: string): void => {
+        if (typeof scene_id === "string") {
+            this.LoadScene(scene_id);
             return;
         }
 
-        this.LoadScene(SCENE_EVENT.detail);
+        this.m_config.Logger.error(`The load scene event received an invalid scene ID. The ID must be a registered string.`);
     };
 }
 
