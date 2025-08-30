@@ -142,7 +142,7 @@ class Renderer {
 
         if (LOADING_SCENE[0] === null) {
             this.m_config.Logger.error(LOADING_SCENE[1]);
-            throw new Error("TODO => handle error...");
+            throw new Error(`An unexpected error occurred during "loading-scene" initialization. Please consult the log for details and resolve the issue.`);
         }
 
         this.m_loading_scene = LOADING_SCENE[0];
@@ -198,7 +198,7 @@ class Renderer {
          * Draw all Components
          */
 
-        this.clearContext2ds(); // TODO => only class .clearContext2ds() if the first .drawComponent() returns void|undefined => otherwise we "cache" the rendered context.
+        this.clearContext2ds(); // TODO => only call .clearContext2ds() if the first .drawComponent() returns void|undefined => otherwise we "cache" the rendered context.
 
         if (this.m_active_scene?.Camera !== undefined) {
             for (let x = 0; x < this.m_active_scene!.Layers.length; x++) {
@@ -479,9 +479,9 @@ class Renderer {
         }
     }
 
-    private updateComponent(component: AbstractComponent, deltaTime: number, inputState: InputStateInterface): void {
+    private updateComponent(component: AbstractComponent, deltaTime: number, inputState: InputStateInterface): false | void {
         if (component.Update(deltaTime, inputState) === false) {
-            return;
+            return false;
         }
 
         const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
@@ -489,21 +489,25 @@ class Renderer {
         let tmp_index: number = COMPONENT_CHILDREN.length - 1;
 
         for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.updateComponent(COMPONENT_CHILDREN[tmp_index], deltaTime, inputState);
+            if (this.updateComponent(COMPONENT_CHILDREN[tmp_index], deltaTime, inputState) === false) {
+                return false;
+            }
 
             tmp_index--;
         }
     }
 
-    private drawComponent(component: AbstractComponent, context: CanvasRenderingContext2D, deltaTime: number): void {
+    private drawComponent(component: AbstractComponent, context: CanvasRenderingContext2D, deltaTime: number): false | void {
         if (component.Draw(context, deltaTime) === false) {
-            return;
+            return false;
         }
 
         const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
 
         for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.drawComponent(COMPONENT_CHILDREN[z], context, deltaTime);
+            if (this.drawComponent(COMPONENT_CHILDREN[z], context, deltaTime) === false) {
+                return false;
+            }
         }
     }
 
