@@ -1,8 +1,7 @@
 import Ref from "@ludeschersoftware/ref";
-import { CreateUniqHash } from "@ludeschersoftware/utils";
+import { CreateUniqHash, HashValue } from "@ludeschersoftware/utils";
 import Texture2D from "../Texture2D";
 import ContentLoadType from "../Enum/ContentLoadType";
-import { HashCode } from "../Utils/HashHelper";
 
 class ContentManager {
     private static _CACHE: Map<number, WeakRef<ImageBitmap>> = new Map();
@@ -40,7 +39,7 @@ class ContentManager {
     }
 
     private load(texture: Texture2D, cache: boolean): Promise<void> {
-        const SRC_HASH: number = HashCode(texture.Src);
+        const SRC_HASH: number = HashValue(texture.Src);
 
         if (ContentManager._CACHE.has(SRC_HASH) === true) {
             const CACHED_VALUE: ImageBitmap | undefined = ContentManager._CACHE.get(SRC_HASH)!.deref();
