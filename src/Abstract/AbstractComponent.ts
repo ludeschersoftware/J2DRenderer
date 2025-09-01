@@ -1,4 +1,4 @@
-import { Box, Optional } from "@ludeschersoftware/types";
+import { Box, Optional, Size, Vector2 } from "@ludeschersoftware/types";
 import InputStateInterface from "../Interfaces/InputStateInterface";
 import ContentManager from "../Manager/ContentManager";
 
@@ -58,6 +58,14 @@ abstract class AbstractComponent implements Box {
         this.m_box.height = height;
     }
 
+    public get position(): Vector2 {
+        return { x: this.x, y: this.y };
+    }
+
+    public get size(): Size {
+        return { width: this.width, height: this.height };
+    }
+
     public SetParentComponent(parent: AbstractComponent): void {
         this.m_parent_component = parent;
     }
@@ -75,6 +83,10 @@ abstract class AbstractComponent implements Box {
         component.SetParentComponent(this);
 
         this.m_child_components.push(component);
+    }
+
+    protected getParentComponent(): AbstractComponent | undefined {
+        return this.m_parent_component;
     }
 }
 
