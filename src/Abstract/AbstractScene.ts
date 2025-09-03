@@ -1,20 +1,30 @@
 import GlobalConfigInterface from "../Interfaces/GlobalConfigInterface";
-import TSceneLayers from "../Types/TSceneLayers";
+import SceneLayer from "../SceneLayer";
 
 abstract class AbstractScene {
     public Id: string;
-    public Layers: TSceneLayers;
 
     protected m_config!: GlobalConfigInterface;
+    protected m_layers: Map<number, SceneLayer>;
 
     constructor(id: string) {
         this.Id = id;
-        this.Layers = [];
+        this.m_layers = new Map();
     }
 
     public Initialize(config: GlobalConfigInterface): void {
-        this.Layers = [];
         this.m_config = config;
+        this.m_layers.clear();
+    }
+
+    public *Layers(): Generator<SceneLayer> {
+        for (const layer of this.m_layers.values()) {
+            yield layer;
+        }
+    }
+
+    protected AddLayer(layer: SceneLayer): void {
+        this.m_layers.set(this.m_layers.size, layer);
     }
 }
 

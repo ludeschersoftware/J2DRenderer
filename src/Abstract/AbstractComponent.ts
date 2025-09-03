@@ -1,11 +1,12 @@
 import { Box, Optional, Size, Vector2 } from "@ludeschersoftware/types";
 import InputStateInterface from "../Interfaces/InputStateInterface";
 import ContentManager from "../Manager/ContentManager";
+import ContextInterface from "../Interfaces/ContextInterface";
 
 abstract class AbstractComponent implements Box {
     private m_box: Box;
     private m_parent_component: AbstractComponent | undefined;
-    private m_child_components: AbstractComponent[];
+    private m_child_components: Map<number, AbstractComponent>;
 
     constructor(box?: Optional<Box>) {
         this.m_box = Object.assign({
@@ -15,7 +16,7 @@ abstract class AbstractComponent implements Box {
             height: 0,
         }, box);
         this.m_parent_component = undefined;
-        this.m_child_components = [];
+        this.m_child_components = new Map();
     }
 
     public get x(): number {
@@ -72,17 +73,19 @@ abstract class AbstractComponent implements Box {
 
     public Initialize(): void { }
     public LoadContent(_contentManager: ContentManager): void { }
-    public Update(_deltaTime: number, _inputState: InputStateInterface): void | false { }
-    public Draw(_context: CanvasRenderingContext2D, _deltaTime: number): void | false { }
+    public Update(_deltaTime: number, _inputState: InputStateInterface): void { }
+    public Draw(_context: ContextInterface, _deltaTime: number): void { }
 
-    public GetComponents(): AbstractComponent[] {
-        return this.m_child_components;
+    public *Components(): Generator<AbstractComponent> {
+        for (const component of this.m_child_components.values()) {
+            yield component;
+        }
     }
 
     protected addComponent(component: AbstractComponent): void {
         component.SetParentComponent(this);
 
-        this.m_child_components.push(component);
+        this.m_child_components.set(this.m_child_components.size, component);
     }
 
     protected getParentComponent(): AbstractComponent | undefined {
