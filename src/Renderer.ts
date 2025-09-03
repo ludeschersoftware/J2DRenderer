@@ -14,6 +14,7 @@ import InitConfigInterface from "./Interfaces/InitConfigInterface";
 import { initializeConfig, setConfig } from "./Config";
 import EventHub from "./EventHub";
 import Logger from "./Logger";
+import Camera2D from "./Camera2D";
 
 class Renderer {
     private m_config: GlobalConfigInterface;
@@ -63,11 +64,12 @@ class Renderer {
             Scale: 1,
             EventHub: new EventHub(config.Container),
             Logger: new Logger(logger),
+            Camera: new Camera2D(new Vec2(config.Container.clientWidth, config.Container.clientHeight)),
         }, rest);
 
         setConfig(config.Id, this.m_config);
 
-        this.m_loading_scene_promise = this.initializeSceneAsync(new LoadingScene(LoadingScene.GetId()));
+        this.m_loading_scene_promise = this.initializeSceneAsync(new LoadingScene());
         this.m_event_layer_element = createElement('div', {
             className: 'event-layer',
             style: {
@@ -174,8 +176,8 @@ class Renderer {
         this.m_input_state.MousePositionWorld.x = 0;
         this.m_input_state.MousePositionWorld.y = 0;
 
-        if (this.m_active_scene!.Camera !== undefined) {
-            Vec2.copy(this.m_input_state.MousePositionWorld, this.m_active_scene!.Camera!.ViewportToWorld(this.m_input_state.MousePositionCamera));
+        if (this.m_config.Camera !== undefined) {
+            Vec2.copy(this.m_input_state.MousePositionWorld, this.m_config.Camera!.ViewportToWorld(this.m_input_state.MousePositionCamera));
         }
 
         let tmp_index: number = this.m_active_scene!.Layers.length - 1;
@@ -200,7 +202,7 @@ class Renderer {
 
         this.clearContext2ds(); // TODO => only call .clearContext2ds() if the first .drawComponent() returns void|undefined => otherwise we "cache" the rendered context.
 
-        if (this.m_active_scene?.Camera !== undefined) {
+        if (this.m_config.Camera !== undefined) {
             for (let x = 0; x < this.m_active_scene!.Layers.length; x++) {
                 const APPLY_CAMERA: boolean = this.m_active_scene!.Layers[x].applyCamera;
 
@@ -209,7 +211,7 @@ class Renderer {
                 }
 
                 const CANVAS: CanvasInterface = this.m_canvas_stack[x];
-                const CANVAS_TRANSFORM: Mat3 = this.m_active_scene!.Camera.GetViewProjectionMatrix();
+                const CANVAS_TRANSFORM: Mat3 = this.m_config.Camera.GetViewProjectionMatrix();
 
                 CANVAS.Context2d!.setTransform(CANVAS_TRANSFORM[0], CANVAS_TRANSFORM[1], CANVAS_TRANSFORM[3], CANVAS_TRANSFORM[4], CANVAS_TRANSFORM[6], CANVAS_TRANSFORM[7]);
             }
@@ -293,7 +295,7 @@ class Renderer {
     }
 
     private async initializeSceneAsync(scene: AbstractScene): Promise<AbstractScene> {
-        scene.Initialize();
+        scene.Initialize(this.m_config);
 
         /**
          * Initialize all Components
@@ -525,8 +527,8 @@ class Renderer {
         this.m_event_layer_element!.style.width = `${this.m_config.Container.offsetWidth}px`;
         this.m_event_layer_element!.style.height = `${this.m_config.Container.offsetHeight}px`;
 
-        if (this.m_active_scene?.Camera !== undefined) {
-            this.m_active_scene!.Camera!.ResizeCanvas(new Vec2(this.m_config.Container.clientWidth, this.m_config.Container.clientHeight));
+        if (this.m_config.Camera !== undefined) {
+            this.m_config.Camera!.ResizeCanvas(new Vec2(this.m_config.Container.clientWidth, this.m_config.Container.clientHeight));
         }
 
         this.optimizeCanvas();

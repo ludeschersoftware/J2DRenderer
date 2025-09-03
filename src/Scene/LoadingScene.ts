@@ -5,10 +5,8 @@ class LoadingScene extends AbstractScene {
         return "default-loading-scene";
     }
 
-    public override Initialize(): void {
-        super.Initialize();
-
-        this.Layers = [];
+    constructor() {
+        super(LoadingScene.GetId());
     }
 }
 
