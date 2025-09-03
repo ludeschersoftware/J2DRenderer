@@ -1,11 +1,7 @@
 import TickTock from "@ludeschersoftware/ticktock";
 import { createElement } from "@ludeschersoftware/dom";
 import CEventType from "./Enum/CEventType";
-import LoadingScene from "./Scene/LoadingScene";
-import { ResolveAsync } from "./Utils/PromiseHelper";
 import AbstractComponent from "./Abstract/AbstractComponent";
-import ContentManager from "./Manager/ContentManager";
-import AbstractScene from "./Abstract/AbstractScene";
 import { Mat3, Vec2 } from "gl-matrix";
 import InputStateInterface from "./Interfaces/InputStateInterface";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
@@ -15,16 +11,13 @@ import { initializeConfig, setConfig } from "./Config";
 import EventHub from "./EventHub";
 import Logger from "./Logger";
 import Camera2D from "./Camera2D";
+import SceneManager from "./Manager/SceneManager";
+import AbstractScene from "./Abstract/AbstractScene";
 
 class Renderer {
     private m_config: GlobalConfigInterface;
-    private m_scenes: Map<string, AbstractScene>;
+    private m_scene_manager: SceneManager;
     private m_now: number;
-    private m_active_scene: AbstractScene | undefined;
-    private m_loading_scene_promise: Promise<AbstractScene> | undefined;
-    private m_loading_scene: AbstractScene | undefined;
-    private m_next_scene: AbstractScene | undefined;
-    private m_currently_initializing_scene_id: string | undefined;
     private m_canvas_stack: Array<CanvasInterface>;
     private m_event_layer_element: HTMLDivElement;
     private m_input_state: InputStateInterface;
@@ -33,13 +26,25 @@ class Renderer {
     constructor(config: InitConfigInterface) {
         initializeConfig();
 
-        this.m_scenes = new Map();
+        const { Container, Id, logger, ...rest } = config;
+        const CONTAINER_RECT: DOMRect = Container.getBoundingClientRect();
+
+        this.m_config = Object.assign({
+            Id,
+            Container,
+            Canvas: {
+                width: Container.offsetWidth,
+                height: Container.offsetHeight,
+                x: CONTAINER_RECT.x,
+                y: CONTAINER_RECT.y,
+            },
+            Scale: 1,
+            EventHub: new EventHub(Container),
+            Logger: new Logger(logger),
+            Camera: new Camera2D(new Vec2(Container.clientWidth, Container.clientHeight)),
+        }, rest);
+        this.m_scene_manager = new SceneManager(this.m_config);
         this.m_now = 0;
-        this.m_active_scene = undefined;
-        this.m_loading_scene_promise = undefined;
-        this.m_loading_scene = undefined;
-        this.m_next_scene = undefined;
-        this.m_currently_initializing_scene_id = undefined;
         this.m_canvas_stack = [];
         this.m_input_state = {
             MousePositionCamera: Vec2.create(),
@@ -50,44 +55,24 @@ class Renderer {
             KeyboardKeyDown: {},
         };
 
-        const CONTAINER_RECT: DOMRect = config.Container.getBoundingClientRect();
+        setConfig(Id, this.m_config);
 
-        const { logger, ...rest } = config;
-
-        this.m_config = Object.assign({
-            Canvas: {
-                width: config.Container.offsetWidth,
-                height: config.Container.offsetHeight,
-                x: CONTAINER_RECT.x,
-                y: CONTAINER_RECT.y,
-            },
-            Scale: 1,
-            EventHub: new EventHub(config.Container),
-            Logger: new Logger(logger),
-            Camera: new Camera2D(new Vec2(config.Container.clientWidth, config.Container.clientHeight)),
-        }, rest);
-
-        setConfig(config.Id, this.m_config);
-
-        this.m_loading_scene_promise = this.initializeSceneAsync(new LoadingScene());
         this.m_event_layer_element = createElement('div', {
             className: 'event-layer',
             style: {
                 position: 'absolute',
                 top: '0px',
                 left: '0px',
-                width: `${config.Container.offsetWidth}px`,
-                height: `${config.Container.offsetHeight}px`,
+                width: `${Container.offsetWidth}px`,
+                height: `${Container.offsetHeight}px`,
                 zIndex: '6',
                 cursor: 'none',
             },
         });
 
-        config.Container.appendChild(this.m_event_layer_element);
+        Container.appendChild(this.m_event_layer_element);
 
         document.addEventListener('contextmenu', e => e?.cancelable && e.preventDefault());
-
-        this.m_config.EventHub.listen(CEventType.LoadScene, this.handleLoadScene);
 
         this.m_event_layer_element.addEventListener("mousedown", (e) => this.canvasMouseDown(e));
         this.m_event_layer_element.addEventListener("mouseup", (e) => this.canvasMouseUp(e));
@@ -100,60 +85,21 @@ class Renderer {
 
         (new ResizeObserver(() => {
             this.m_resize_ticktock.run();
-        })).observe(config.Container);
+        })).observe(Container);
 
         this.handleResize();
     }
 
-    public SetLoadingScene(scene: AbstractScene): void {
-        this.m_loading_scene_promise = this.initializeSceneAsync(scene);
-    }
-
-    public RegisterScene(scene: AbstractScene): void {
-        if (this.m_scenes.has(scene.Id) === true) {
-            throw new Error(`There is already a scene registered with the given id "${scene.Id}"!`);
-        }
-
-        this.m_scenes.set(scene.Id, scene);
-    }
-
-    public LoadScene(scene_id: string): void {
-        if (scene_id === LoadingScene.GetId()) {
-            this.m_next_scene = this.m_loading_scene;
-        } else if (this.m_scenes.has(scene_id) === false) {
-            throw new Error(`There is no scene registered with the given id "${scene_id}"!`);
-        } else if (this.m_currently_initializing_scene_id !== scene_id) {
-            this.m_next_scene = this.m_loading_scene;
-            this.m_currently_initializing_scene_id = scene_id;
-
-            this.initializeSceneAsync(this.m_scenes.get(scene_id)!)
-                .then((scene: AbstractScene) => {
-                    this.m_next_scene = scene;
-                    this.m_currently_initializing_scene_id = undefined;
-                })
-                .catch((e: any) => {
-                    this.m_config.Logger.error(e);
-                });
-        }
-    }
+    public SetLoadingScene = (scene: AbstractScene): void => this.m_scene_manager.SetLoadingScene(scene);
+    public RegisterScene = (scene: AbstractScene): void => this.m_scene_manager.RegisterScene(scene);
+    public IsSceneRegistered = (scene_id: string): boolean => this.m_scene_manager.IsSceneRegistered(scene_id);
 
     public async RunAsync(scene_id: string): Promise<void> {
         this.clearContext2ds();
 
-        const LOADING_SCENE: any[] | (AbstractScene | null)[] = await ResolveAsync<AbstractScene>(this.m_loading_scene_promise!);
+        await this.m_scene_manager.initializeLoadingScene();
 
-        if (LOADING_SCENE[0] === null) {
-            this.m_config.Logger.error(LOADING_SCENE[1]);
-            throw new Error(`An unexpected error occurred during "loading-scene" initialization. Please consult the log for details and resolve the issue.`);
-        }
-
-        this.m_loading_scene = LOADING_SCENE[0];
-
-        this.LoadScene(scene_id);
-
-        if (this.m_active_scene === undefined) {
-            this.m_active_scene = this.m_loading_scene;
-        }
+        this.m_scene_manager.LoadScene(scene_id);
 
         requestAnimationFrame(this.renderLoop);
     }
@@ -165,7 +111,7 @@ class Renderer {
 
         this.m_now = now;
 
-        if (this.m_active_scene!.Layers.length !== this.m_canvas_stack.length) {
+        if (this.m_scene_manager.activeScene!.Layers.length !== this.m_canvas_stack.length) {
             this.updateCanvasStack();
         }
 
@@ -180,10 +126,10 @@ class Renderer {
             Vec2.copy(this.m_input_state.MousePositionWorld, this.m_config.Camera!.ViewportToWorld(this.m_input_state.MousePositionCamera));
         }
 
-        let tmp_index: number = this.m_active_scene!.Layers.length - 1;
+        let tmp_index: number = this.m_scene_manager.activeScene!.Layers.length - 1;
 
-        for (let x = 0; x < this.m_active_scene!.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = this.m_active_scene!.Layers[tmp_index].components;
+        for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
+            const COMPONENTS: AbstractComponent[] = this.m_scene_manager.activeScene!.Layers[tmp_index].components;
 
             let tmp_inner_index: number = COMPONENTS.length - 1;
 
@@ -203,8 +149,8 @@ class Renderer {
         this.clearContext2ds(); // TODO => only call .clearContext2ds() if the first .drawComponent() returns void|undefined => otherwise we "cache" the rendered context.
 
         if (this.m_config.Camera !== undefined) {
-            for (let x = 0; x < this.m_active_scene!.Layers.length; x++) {
-                const APPLY_CAMERA: boolean = this.m_active_scene!.Layers[x].applyCamera;
+            for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
+                const APPLY_CAMERA: boolean = this.m_scene_manager.activeScene!.Layers[x].applyCamera;
 
                 if (APPLY_CAMERA === false) {
                     continue;
@@ -217,22 +163,15 @@ class Renderer {
             }
         }
 
-        for (let x = 0; x < this.m_active_scene!.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = this.m_active_scene!.Layers[x].components;
+        for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
+            const COMPONENTS: AbstractComponent[] = this.m_scene_manager.activeScene!.Layers[x].components;
 
             for (let y = 0; y < COMPONENTS.length; y++) {
                 this.drawComponent(COMPONENTS[y], this.m_canvas_stack[x]!.Context2d, DELTA_TIME);
             }
         }
 
-        if (this.m_next_scene !== undefined) {
-            /**
-             * Make sure you switch scenes only after the current render loop,
-             * otherwise you would change resources update and draw calls for the active scene
-             * which could lead to crashes.
-             */
-            this.m_active_scene = this.m_next_scene;
-            this.m_next_scene = undefined;
+        if (this.m_scene_manager.moveToNextScene()) {
             this.m_input_state.MouseLeftDown = false;
             this.m_input_state.MouseMiddleDown = false;
             this.m_input_state.MouseRightDown = false;
@@ -292,44 +231,6 @@ class Renderer {
 
         this.m_event_layer_element!.style.width = `${CONTAINER_RECT.width}px`;
         this.m_event_layer_element!.style.height = `${CONTAINER_RECT.height}px`;
-    }
-
-    private async initializeSceneAsync(scene: AbstractScene): Promise<AbstractScene> {
-        scene.Initialize(this.m_config);
-
-        /**
-         * Initialize all Components
-         */
-
-        for (let x = 0; x < scene.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = scene.Layers[x].components;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.initializeComponent(COMPONENTS[y]);
-            }
-        }
-
-        /**
-         * Load all Component Contents
-         */
-
-        const CONTENT_MANAGER: ContentManager = new ContentManager();
-
-        for (let x = 0; x < scene.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = scene.Layers[x].components;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.loadContentComponent(CONTENT_MANAGER, COMPONENTS[y]);
-            }
-        }
-
-        const CONTENT_RESULT: PromiseSettledResult<void>[] = await CONTENT_MANAGER.WaitLoadFulfilledAsync();
-
-        if (CONTENT_RESULT.filter(x => x.status === 'rejected').length > 0) {
-            throw new Error(`Initialization failed for scene "${scene.Id}", one or more content elements could not be loaded!`);
-        }
-
-        return scene;
     }
 
     private clearContext2ds(): void {
@@ -408,8 +309,8 @@ class Renderer {
     }
 
     private updateCanvasStack(): void {
-        if (this.m_active_scene!.Layers.length < this.m_canvas_stack.length) {
-            const CANVAS_DIFF: number = this.m_canvas_stack.length - this.m_active_scene!.Layers.length;
+        if (this.m_scene_manager.activeScene!.Layers.length < this.m_canvas_stack.length) {
+            const CANVAS_DIFF: number = this.m_canvas_stack.length - this.m_scene_manager.activeScene!.Layers.length;
 
             for (let x = 0; x < CANVAS_DIFF; x++) {
                 this.m_canvas_stack.pop()!.Element.remove();
@@ -420,7 +321,7 @@ class Renderer {
             return;
         }
 
-        const CANVAS_DIFF: number = this.m_active_scene!.Layers.length - this.m_canvas_stack.length;
+        const CANVAS_DIFF: number = this.m_scene_manager.activeScene!.Layers.length - this.m_canvas_stack.length;
 
         for (let x = 0; x < CANVAS_DIFF; x++) {
             /**
@@ -461,26 +362,6 @@ class Renderer {
         this.optimizeCanvas();
     }
 
-    private initializeComponent(component: AbstractComponent): void {
-        component.Initialize();
-
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.initializeComponent(COMPONENT_CHILDREN[z]);
-        }
-    }
-
-    private loadContentComponent(contentManager: ContentManager, component: AbstractComponent): void {
-        component.LoadContent(contentManager);
-
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.loadContentComponent(contentManager, COMPONENT_CHILDREN[z]);
-        }
-    }
-
     private updateComponent(component: AbstractComponent, deltaTime: number, inputState: InputStateInterface): false | void {
         if (component.Update(deltaTime, inputState) === false) {
             return false;
@@ -514,7 +395,7 @@ class Renderer {
     }
 
     private handleResize = (): void => {
-        this.m_config.EventHub.send(CEventType.BeforeResizeReInitialization, this.m_active_scene?.Id);
+        this.m_config.EventHub.send(CEventType.BeforeResizeReInitialization, this.m_scene_manager.activeScene?.Id);
 
         const CONTAINER_RECT: DOMRect = this.m_config.Container.getBoundingClientRect();
 
@@ -533,16 +414,7 @@ class Renderer {
 
         this.optimizeCanvas();
 
-        this.m_config.EventHub.send(CEventType.AfterResizeReInitialization, this.m_active_scene?.Id);
-    };
-
-    private handleLoadScene = (scene_id: string): void => {
-        if (typeof scene_id === "string") {
-            this.LoadScene(scene_id);
-            return;
-        }
-
-        this.m_config.Logger.error(`The load scene event received an invalid scene ID. The ID must be a registered string.`);
+        this.m_config.EventHub.send(CEventType.AfterResizeReInitialization, this.m_scene_manager.activeScene?.Id);
     };
 }
 
