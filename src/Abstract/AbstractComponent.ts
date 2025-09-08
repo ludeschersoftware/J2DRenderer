@@ -1,3 +1,4 @@
+import List from "@ludeschersoftware/list";
 import { Box, Optional, Size, Vector2 } from "@ludeschersoftware/types";
 import ContentManager from "../Manager/ContentManager";
 import ContextInterface from "../Interfaces/ContextInterface";
@@ -7,7 +8,7 @@ import InputManager from "../Manager/InputManager";
 abstract class AbstractComponent implements Box {
     private m_box: Box;
     private m_parent_component: AbstractComponent | undefined;
-    private m_child_components: Map<number, AbstractComponent>;
+    private m_child_components: List<AbstractComponent>;
 
     constructor(box?: Optional<Box>) {
         this.m_box = Object.assign({
@@ -17,7 +18,7 @@ abstract class AbstractComponent implements Box {
             height: 0,
         }, box);
         this.m_parent_component = undefined;
-        this.m_child_components = new Map();
+        this.m_child_components = new List();
     }
 
     public get x(): number {
@@ -78,15 +79,13 @@ abstract class AbstractComponent implements Box {
     public Draw(_context: ContextInterface, _renderTime: RenderTime): void { }
 
     public *Components(): Generator<AbstractComponent> {
-        for (const component of this.m_child_components.values()) {
-            yield component;
-        }
+        yield* this.m_child_components;
     }
 
     protected addComponent(component: AbstractComponent): void {
         component.SetParentComponent(this);
 
-        this.m_child_components.set(this.m_child_components.size, component);
+        this.m_child_components.Add(component);
     }
 
     protected getParentComponent(): AbstractComponent | undefined {

@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/dom/-/dom-1.0.3.tgz#c0b714ba0d7db6f8de2df028dbd8bd2b12e9c3f7"
   integrity sha512-YYMCNwImAVkDBBw+BulBslSkou/cIHrPL6bDz+SHFPdtcIMA19CvXWiqQra68g8pGqgaEgDInewdMlq+t02xMg==
 
-"@ludeschersoftware/list@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@ludeschersoftware/list/-/list-1.0.0.tgz#66cab55c03eda13bc81290c7f930d03b691b1e55"
-  integrity sha512-Rm77oWhdIwRsRt9+gly59C5dEfJuV0tntGIaPZzIhuaxnEP23XNYrSCCrye1E4dyBTLjUVzdZOzN3wJ0hE046A==
+"@ludeschersoftware/list@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@ludeschersoftware/list/-/list-1.0.1.tgz#48112ba5c1055c4789462d3f69e56593c904ea6e"
+  integrity sha512-vAKhptuOMdVgSvtpcm4viU8KqPI6n3KTvRd4bKG8nulobUbDHRUvaFpU0RaIrn3YAPOA1X6mFXRiphn6/C0+Og==
 
 "@ludeschersoftware/math@^1.0.0":
   version "1.0.0"
