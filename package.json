@@ -31,6 +31,7 @@
     "homepage": "https://github.com/ludeschersoftware/JSceneRenderer#readme",
     "dependencies": {
         "@ludeschersoftware/dom": "^1.0.3",
+        "@ludeschersoftware/list": "^1.0.0",
         "@ludeschersoftware/ref": "^1.0.0",
         "@ludeschersoftware/struct": "^1.1.0",
         "@ludeschersoftware/ticktock": "^1.0.1",
