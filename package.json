@@ -33,9 +33,10 @@
         "@ludeschersoftware/dom": "^1.0.3",
         "@ludeschersoftware/list": "^1.0.0",
         "@ludeschersoftware/ref": "^1.0.0",
+        "@ludeschersoftware/result": "^1.0.0",
         "@ludeschersoftware/struct": "^1.1.0",
         "@ludeschersoftware/ticktock": "^1.0.1",
-        "@ludeschersoftware/utils": "^1.1.0",
+        "@ludeschersoftware/utils": "^1.2.1",
         "gl-matrix": "4.0.0-beta.2"
     },
     "devDependencies": {

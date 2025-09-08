@@ -22,6 +22,11 @@
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/ref/-/ref-1.0.0.tgz#5f20e9fe83a859798f4eb4b96719b77f435fd43d"
   integrity sha512-2J/aREHAbBvzGziB66pk3E1Y8wsxkQk13KQ52i2OxZDspks2zcjlMUrE2GgTBGUMocuATWoUKiu4k7J13nWwUA==
 
+"@ludeschersoftware/result@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@ludeschersoftware/result/-/result-1.0.0.tgz#0b2ca78c891790b60d227d4a5ab17ef037b75473"
+  integrity sha512-Ffq4oHl0dlBC6R1QCwBeC/2nFKJa66n96zq8clz5M0avuGzv8AXd7LVUbs2zFKHEgwHr/MKKuT63+yPLGrj2Kw==
+
 "@ludeschersoftware/struct@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/struct/-/struct-1.1.0.tgz#54b05fca94b44b17c4ee6b4c50b37dacb3f84411"
@@ -37,12 +42,13 @@
   resolved "https://registry.yarnpkg.com/@ludeschersoftware/types/-/types-1.3.0.tgz#a52556a2457c6e81835e038cec8e147309797847"
   integrity sha512-cv2g+HDgigOLs8N3yR7IgrBaV1JVQU1eIr/vxEb7sP69ABy2kYBb999fXQc2YXmgde7JU7laRmxfyeogX5V2lA==
 
-"@ludeschersoftware/utils@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@ludeschersoftware/utils/-/utils-1.1.0.tgz#6e701c5e22d0531158c832f47e8513931bd3e277"
-  integrity sha512-8ObA+WKcgd/YSOW0tBAe6+ePM1G2c9HVYC3lhHotIqJXpvWtV4Boua6oTBO4bs+OeU0pJndtEkxNyup5jHsEqA==
+"@ludeschersoftware/utils@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@ludeschersoftware/utils/-/utils-1.2.1.tgz#d51c0c45147f759f4ca3878bc80d560cd69118bd"
+  integrity sha512-YrUe7W3w82U4JVlgNMnQn4eT4mwV+sQE/6Y5nFSOBvBj36/b/AZKKxi84xCL5XhNuBW9WSw0bFAWyDlbCMlxyw==
   dependencies:
     "@ludeschersoftware/math" "^1.0.0"
+    "@ludeschersoftware/result" "^1.0.0"
 
 gl-matrix@4.0.0-beta.2:
   version "4.0.0-beta.2"

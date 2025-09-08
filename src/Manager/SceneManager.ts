@@ -1,9 +1,10 @@
+import { ResolveAsync } from "@ludeschersoftware/utils";
+import Result from "@ludeschersoftware/result";
 import AbstractComponent from "../Abstract/AbstractComponent";
 import AbstractScene from "../Abstract/AbstractScene";
 import RendererEventType from "../Enum/RendererEventType";
 import GlobalConfigInterface from "../Interfaces/GlobalConfigInterface";
 import LoadingScene from "../Scene/LoadingScene";
-import { ResolveAsync } from "../Utils/PromiseHelper";
 import ContentManager from "./ContentManager";
 
 class SceneManager {
@@ -48,7 +49,7 @@ class SceneManager {
     }
 
     public LoadScene(scene_id: string): void {
-        if (scene_id === LoadingScene.GetId()) {
+        if (scene_id === LoadingScene.GET_ID()) {
             this.m_next_scene = this.m_loading_scene;
         } else if (this.m_scenes.has(scene_id) === false) {
             throw new Error(`There is no scene registered with the given id "${scene_id}"!`);
@@ -68,14 +69,15 @@ class SceneManager {
     }
 
     public async initializeLoadingScene(): Promise<void> {
-        const LOADING_SCENE: any[] | (AbstractScene | null)[] = await ResolveAsync<AbstractScene>(this.m_loading_scene_promise!);
+        const LOADING_SCENE: Result<AbstractScene, unknown> = await ResolveAsync<AbstractScene>(this.m_loading_scene_promise!);
 
-        if (LOADING_SCENE[0] === null) {
-            this.m_config.Logger.error(LOADING_SCENE[1]);
+        if (LOADING_SCENE.isErr()) {
+            this.m_config.Logger.error(LOADING_SCENE.unwrapErr());
+
             throw new Error(`An unexpected error occurred during "loading-scene" initialization. Please consult the log for details and resolve the issue.`);
         }
 
-        this.m_loading_scene = LOADING_SCENE[0];
+        this.m_loading_scene = LOADING_SCENE.unwrap();
 
         if (this.m_active_scene === undefined) {
             this.m_active_scene = this.m_loading_scene;
