@@ -4,8 +4,8 @@ import Texture2D from "../Texture2D";
 import ContentLoadType from "../Enum/ContentLoadType";
 
 class ContentManager {
-    private static _CACHE: Map<number, WeakRef<ImageBitmap>> = new Map();
-    private static _CONTENT_LOAD_COUNT: Map<number, Ref<number>> = new Map();
+    private static M_CACHE: Map<number, WeakRef<ImageBitmap>> = new Map();
+    private static M_CONTENT_LOAD_COUNT: Map<number, Ref<number>> = new Map();
 
     private m_loading: Map<string, Promise<void>>;
 
@@ -41,11 +41,11 @@ class ContentManager {
     private load(texture: Texture2D, cache: boolean): Promise<void> {
         const SRC_HASH: number = HashValue(texture.Src);
 
-        if (ContentManager._CACHE.has(SRC_HASH) === true) {
-            const CACHED_VALUE: ImageBitmap | undefined = ContentManager._CACHE.get(SRC_HASH)!.deref();
+        if (ContentManager.M_CACHE.has(SRC_HASH) === true) {
+            const CACHED_VALUE: ImageBitmap | undefined = ContentManager.M_CACHE.get(SRC_HASH)!.deref();
 
             if (CACHED_VALUE === undefined) {
-                ContentManager._CACHE.delete(SRC_HASH);
+                ContentManager.M_CACHE.delete(SRC_HASH);
             } else {
                 texture.ContentLoaded(CACHED_VALUE);
 
@@ -61,19 +61,19 @@ class ContentManager {
                     texture.ContentLoaded(value);
 
                     if (cache === true) {
-                        if (ContentManager._CACHE.has(SRC_HASH) === false) {
-                            ContentManager._CACHE.set(SRC_HASH, new WeakRef(value));
+                        if (ContentManager.M_CACHE.has(SRC_HASH) === false) {
+                            ContentManager.M_CACHE.set(SRC_HASH, new WeakRef(value));
                         }
                     } else {
-                        if (ContentManager._CONTENT_LOAD_COUNT.has(SRC_HASH) === true) {
-                            ContentManager._CONTENT_LOAD_COUNT.get(SRC_HASH)!.value++;
+                        if (ContentManager.M_CONTENT_LOAD_COUNT.has(SRC_HASH) === true) {
+                            ContentManager.M_CONTENT_LOAD_COUNT.get(SRC_HASH)!.value++;
                         } else {
-                            ContentManager._CONTENT_LOAD_COUNT.set(SRC_HASH, new Ref<number>(1));
+                            ContentManager.M_CONTENT_LOAD_COUNT.set(SRC_HASH, new Ref<number>(1));
                         }
 
-                        if (ContentManager._CONTENT_LOAD_COUNT.get(SRC_HASH)!.value >= 5) {
-                            ContentManager._CACHE.set(SRC_HASH, new WeakRef(value));
-                            ContentManager._CONTENT_LOAD_COUNT.delete(SRC_HASH);
+                        if (ContentManager.M_CONTENT_LOAD_COUNT.get(SRC_HASH)!.value >= 5) {
+                            ContentManager.M_CACHE.set(SRC_HASH, new WeakRef(value));
+                            ContentManager.M_CONTENT_LOAD_COUNT.delete(SRC_HASH);
                         }
                     }
 

@@ -1,38 +1,39 @@
 import TickTock from "@ludeschersoftware/ticktock";
 import { createElement } from "@ludeschersoftware/dom";
-import CEventType from "./Enum/CEventType";
+import RendererEventType from "./Enum/RendererEventType";
 import AbstractComponent from "./Abstract/AbstractComponent";
 import { Mat3, Vec2 } from "gl-matrix";
-import InputStateInterface from "./Interfaces/InputStateInterface";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
 import CanvasInterface from "./Interfaces/CanvasInterface";
 import InitConfigInterface from "./Interfaces/InitConfigInterface";
 import { initializeConfig, setConfig } from "./Config";
 import EventHub from "./EventHub";
-import Logger from "./Logger";
-import Camera2D from "./Camera2D";
+import LogLog from "./Logger";
 import SceneManager from "./Manager/SceneManager";
 import AbstractScene from "./Abstract/AbstractScene";
+import InputManager from "./Manager/InputManager";
 
 class Renderer {
     private m_config: GlobalConfigInterface;
     private m_scene_manager: SceneManager;
     private m_now: number;
-    private m_canvas_stack: Array<CanvasInterface>;
+    private m_canvas_stack: Map<number, CanvasInterface>;
     private m_event_layer_element: HTMLDivElement;
-    private m_input_state: InputStateInterface;
+    private m_input_manager: InputManager;
     private m_resize_ticktock: TickTock;
 
     constructor(config: InitConfigInterface) {
         initializeConfig();
 
-        const { Container, Id, logger, ...rest } = config;
+        const { Container, Id, Logger, ...rest } = config;
         const CONTAINER_RECT: DOMRect = Container.getBoundingClientRect();
+
+        //  Camera: new Canvas2DCamera(new Vec2(Container.clientWidth, Container.clientHeight)),
 
         this.m_config = Object.assign({
             Id,
             Container,
-            Canvas: {
+            Viewport: {
                 width: Container.offsetWidth,
                 height: Container.offsetHeight,
                 x: CONTAINER_RECT.x,
@@ -40,20 +41,12 @@ class Renderer {
             },
             Scale: 1,
             EventHub: new EventHub(Container),
-            Logger: new Logger(logger),
-            Camera: new Camera2D(new Vec2(Container.clientWidth, Container.clientHeight)),
+            Logger: new LogLog(Logger),
         }, rest);
         this.m_scene_manager = new SceneManager(this.m_config);
         this.m_now = 0;
-        this.m_canvas_stack = [];
-        this.m_input_state = {
-            MousePositionCamera: Vec2.create(),
-            MousePositionWorld: Vec2.create(),
-            MouseLeftDown: false,
-            MouseMiddleDown: false,
-            MouseRightDown: false,
-            KeyboardKeyDown: {},
-        };
+        this.m_canvas_stack = new Map();
+        this.m_input_manager = new InputManager();
 
         setConfig(Id, this.m_config);
 
@@ -362,7 +355,7 @@ class Renderer {
         this.optimizeCanvas();
     }
 
-    private updateComponent(component: AbstractComponent, deltaTime: number, inputState: InputStateInterface): false | void {
+    private updateComponent(component: AbstractComponent, deltaTime: number, inputManager: InputManager): false | void {
         if (component.Update(deltaTime, inputState) === false) {
             return false;
         }
@@ -395,7 +388,7 @@ class Renderer {
     }
 
     private handleResize = (): void => {
-        this.m_config.EventHub.send(CEventType.BeforeResizeReInitialization, this.m_scene_manager.activeScene?.Id);
+        this.m_config.EventHub.send(RendererEventType.BeforeResizeReInitialization, this.m_scene_manager.activeScene?.Id);
 
         const CONTAINER_RECT: DOMRect = this.m_config.Container.getBoundingClientRect();
 
@@ -414,7 +407,7 @@ class Renderer {
 
         this.optimizeCanvas();
 
-        this.m_config.EventHub.send(CEventType.AfterResizeReInitialization, this.m_scene_manager.activeScene?.Id);
+        this.m_config.EventHub.send(RendererEventType.AfterResizeReInitialization, this.m_scene_manager.activeScene?.Id);
     };
 }
 

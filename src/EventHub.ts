@@ -1,4 +1,4 @@
-import CEventType from "./Enum/CEventType";
+import RendererEventType from "./Enum/RendererEventType";
 import SceneEvent from "./SceneEvent";
 
 class EventHub {
@@ -8,13 +8,13 @@ class EventHub {
         this.m_element = element;
     }
 
-    public send<T>(type: CEventType, payload?: T): void {
+    public send<T>(type: RendererEventType, payload?: T): void {
         this.m_element.dispatchEvent(
             new SceneEvent<T>(type, payload)
         );
     }
 
-    public listen<T>(type: CEventType, callback: (payload: T) => void): void {
+    public listen<T>(type: RendererEventType, callback: (payload: T) => void): void {
         this.m_element.addEventListener(type, (ev: Event) => {
             callback((ev as SceneEvent<T>).detail!);
         });

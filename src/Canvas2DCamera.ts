@@ -1,15 +1,16 @@
 import { Mat3, Vec2 } from 'gl-matrix';
+import CameraInterface from './Interfaces/CameraInterface';
 
-class Camera2D {
-    protected m_position: Vec2;
-    protected m_rotation: number;
-    protected m_zoom: number;
-    protected m_view_matrix: Mat3;
-    protected m_projection_matrix: Mat3;
-    protected m_view_projection_matrix: Mat3;
-    protected m_inverse_view_projection_matrix: Mat3;
-    protected m_dirty: boolean;
-    protected m_canvas_size: Vec2;
+class Canvas2DCamera implements CameraInterface {
+    private m_position: Vec2;
+    private m_rotation: number;
+    private m_zoom: number;
+    private m_view_matrix: Mat3;
+    private m_projection_matrix: Mat3;
+    private m_view_projection_matrix: Mat3;
+    private m_inverse_view_projection_matrix: Mat3;
+    private m_dirty: boolean;
+    private m_canvas_size: Vec2;
 
     constructor(canvasSize: Vec2, zoom: number = 1) {
         this.m_position = Vec2.fromValues(0, 0);
@@ -97,7 +98,7 @@ class Camera2D {
         return worldPoint;
     }
 
-    protected updateProjectionMatrix(): void {
+    private updateProjectionMatrix(): void {
         // Orthographic projection for 2D using canvas size
         // const halfWidth = this.m_canvas_size[0] / 2;
         // const halfHeight = this.m_canvas_size[1] / 2;
@@ -107,7 +108,7 @@ class Camera2D {
         // Mat3.scale(this.m_projection_matrix, this.m_projection_matrix, [1 / halfWidth, -1 / halfHeight]); // Y-axis is flipped for screen coordinates
     }
 
-    protected updateViewMatrix(): void {
+    private updateViewMatrix(): void {
         if (!this.m_dirty) return;
 
         // View Matrix: Translate, Rotate, and then Scale (Zoom)
@@ -126,4 +127,4 @@ class Camera2D {
     }
 }
 
-export default Camera2D;
+export default Canvas2DCamera;

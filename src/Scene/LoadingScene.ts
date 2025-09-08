@@ -1,12 +1,12 @@
 import AbstractScene from "../Abstract/AbstractScene";
 
 class LoadingScene extends AbstractScene {
-    public static GetId(): string {
+    public static GET_ID(): string {
         return "default-loading-scene";
     }
 
     constructor() {
-        super(LoadingScene.GetId());
+        super(LoadingScene.GET_ID());
     }
 }
 

@@ -1,7 +1,8 @@
 import { Box, Optional, Size, Vector2 } from "@ludeschersoftware/types";
-import InputStateInterface from "../Interfaces/InputStateInterface";
 import ContentManager from "../Manager/ContentManager";
 import ContextInterface from "../Interfaces/ContextInterface";
+import RenderTime from "../RenderTime";
+import InputManager from "../Manager/InputManager";
 
 abstract class AbstractComponent implements Box {
     private m_box: Box;
@@ -73,8 +74,8 @@ abstract class AbstractComponent implements Box {
 
     public Initialize(): void { }
     public LoadContent(_contentManager: ContentManager): void { }
-    public Update(_deltaTime: number, _inputState: InputStateInterface): void { }
-    public Draw(_context: ContextInterface, _deltaTime: number): void { }
+    public Update(_renderTime: RenderTime, _inputManager: InputManager): void { }
+    public Draw(_context: ContextInterface, _renderTime: RenderTime): void { }
 
     public *Components(): Generator<AbstractComponent> {
         for (const component of this.m_child_components.values()) {

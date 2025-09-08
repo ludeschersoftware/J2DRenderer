@@ -1,19 +1,26 @@
+import CameraInterface from "../Interfaces/CameraInterface";
 import GlobalConfigInterface from "../Interfaces/GlobalConfigInterface";
 import SceneLayer from "../SceneLayer";
 
 abstract class AbstractScene {
-    public Id: string;
+    public m_id: string;
 
     protected m_config!: GlobalConfigInterface;
+    protected m_camera!: CameraInterface;
     protected m_layers: Map<number, SceneLayer>;
 
     constructor(id: string) {
-        this.Id = id;
+        this.m_id = id;
         this.m_layers = new Map();
     }
 
-    public Initialize(config: GlobalConfigInterface): void {
+    public get Id(): string {
+        return this.m_id;
+    }
+
+    public Initialize(config: GlobalConfigInterface, camera: CameraInterface): void {
         this.m_config = config;
+        this.m_camera = camera;
         this.m_layers.clear();
     }
 

@@ -9,24 +9,24 @@ class WebGLBackend implements ContextInterface {
         this.gl = gl;
     }
 
-    clear(color: string = "black"): void {
+    public Clear(color: string = "black"): void {
         const [r, g, b] = this.hexToRGB(color);
         this.gl.clearColor(r, g, b, 1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
 
-    drawSprite(image: HTMLImageElement, x: number, y: number, w: number, h: number): void {
+    public DrawSprite(image: HTMLImageElement, x: number, y: number, w: number, h: number): void {
         // Real implementation would require shader + buffer setup.
         // Here you'd upload the texture and draw a quad.
         console.log("WebGL sprite draw not fully implemented yet.");
     }
 
-    drawText(): void {
+    public DrawText(): void {
         // WebGL doesn’t have text — you'd need bitmap fonts.
         console.warn("WebGL text drawing not implemented. Use bitmap fonts.");
     }
 
-    present(): void {
+    public Present(): void {
         // In WebGL, rendering happens immediately once you call draw commands.
     }
 

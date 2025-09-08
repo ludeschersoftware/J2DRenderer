@@ -1,6 +1,6 @@
 import AbstractComponent from "../Abstract/AbstractComponent";
 import AbstractScene from "../Abstract/AbstractScene";
-import CEventType from "../Enum/CEventType";
+import RendererEventType from "../Enum/RendererEventType";
 import GlobalConfigInterface from "../Interfaces/GlobalConfigInterface";
 import LoadingScene from "../Scene/LoadingScene";
 import { ResolveAsync } from "../Utils/PromiseHelper";
@@ -24,9 +24,7 @@ class SceneManager {
         this.m_next_scene = undefined;
         this.m_currently_initializing_scene_id = undefined;
 
-
-
-        this.m_config.EventHub.listen(CEventType.LoadScene, this.handleLoadScene);
+        this.m_config.EventHub.listen(RendererEventType.LoadScene, this.handleLoadScene);
     }
 
     public get activeScene(): AbstractScene | undefined {
@@ -101,17 +99,15 @@ class SceneManager {
     }
 
     private async initializeSceneAsync(scene: AbstractScene): Promise<AbstractScene> {
-        scene.Initialize(this.m_config);
+        scene.Initialize(this.m_config, undefined);
 
         /**
          * Initialize all Components
          */
 
-        for (let x = 0; x < scene.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = scene.Layers[x].components;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.initializeComponent(COMPONENTS[y]);
+        for (const layer of scene.Layers()) {
+            for (const component of layer.Components()) {
+                this.initializeComponent(component);
             }
         }
 
@@ -121,11 +117,9 @@ class SceneManager {
 
         const CONTENT_MANAGER: ContentManager = new ContentManager();
 
-        for (let x = 0; x < scene.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = scene.Layers[x].components;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.loadContentComponent(CONTENT_MANAGER, COMPONENTS[y]);
+        for (const layer of scene.Layers()) {
+            for (const component of layer.Components()) {
+                this.loadContentComponent(CONTENT_MANAGER, component);
             }
         }
 
@@ -141,20 +135,16 @@ class SceneManager {
     private initializeComponent(component: AbstractComponent): void {
         component.Initialize();
 
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.initializeComponent(COMPONENT_CHILDREN[z]);
+        for (const child of component.Components()) {
+            this.initializeComponent(child);
         }
     }
 
     private loadContentComponent(contentManager: ContentManager, component: AbstractComponent): void {
         component.LoadContent(contentManager);
 
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            this.loadContentComponent(contentManager, COMPONENT_CHILDREN[z]);
+        for (const child of component.Components()) {
+            this.loadContentComponent(contentManager, child);
         }
     }
 

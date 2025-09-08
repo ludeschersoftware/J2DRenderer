@@ -7,7 +7,7 @@ interface InitConfigInterface extends BaseConfigInterface {
     ShowLoadingScene?: boolean;
     LoadingScene?: AbstractScene;
     Scenes?: Array<AbstractScene>;
-    logger?: TLoggerCallback;
+    Logger?: TLoggerCallback;
 }
 
 export default InitConfigInterface;
