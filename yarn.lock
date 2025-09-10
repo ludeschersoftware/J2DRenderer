@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@ludeschersoftware/dom@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@ludeschersoftware/dom/-/dom-1.0.3.tgz#c0b714ba0d7db6f8de2df028dbd8bd2b12e9c3f7"
-  integrity sha512-YYMCNwImAVkDBBw+BulBslSkou/cIHrPL6bDz+SHFPdtcIMA19CvXWiqQra68g8pGqgaEgDInewdMlq+t02xMg==
+"@ludeschersoftware/dom@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@ludeschersoftware/dom/-/dom-1.1.1.tgz#aa04341b9720818fd8bc5f4a299f93147e2555ba"
+  integrity sha512-vI+VL7hyWtpuMDv//nA+olUCIcttlMJ+t1DQ5FhBvH1wkihawiKC+FT5nIgXj1aWcPmUknmzbrnG5bffr8jgeg==
 
 "@ludeschersoftware/list@^1.0.1":
   version "1.0.1"

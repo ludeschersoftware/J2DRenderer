@@ -14,13 +14,12 @@ import AbstractScene from "./Abstract/AbstractScene";
 import InputManager from "./Manager/InputManager";
 
 class Renderer {
-    private m_config: GlobalConfigInterface;
-    private m_scene_manager: SceneManager;
-    private m_now: number;
-    private m_canvas_stack: Map<number, CanvasInterface>;
-    private m_event_layer_element: HTMLDivElement;
-    private m_input_manager: InputManager;
-    private m_resize_ticktock: TickTock;
+    protected m_config: GlobalConfigInterface;
+    protected m_scene_manager: SceneManager;
+    protected m_now: number;
+    protected m_canvas_stack: Map<number, CanvasInterface>;
+    protected m_input_manager: InputManager;
+    protected m_resize_ticktock: TickTock;
 
     constructor(config: InitConfigInterface) {
         initializeConfig();
@@ -46,33 +45,11 @@ class Renderer {
         this.m_scene_manager = new SceneManager(this.m_config);
         this.m_now = 0;
         this.m_canvas_stack = new Map();
-        this.m_input_manager = new InputManager();
+        this.m_input_manager = new InputManager(Container, this.m_config);
 
         setConfig(Id, this.m_config);
 
-        this.m_event_layer_element = createElement('div', {
-            className: 'event-layer',
-            style: {
-                position: 'absolute',
-                top: '0px',
-                left: '0px',
-                width: `${Container.offsetWidth}px`,
-                height: `${Container.offsetHeight}px`,
-                zIndex: '6',
-                cursor: 'none',
-            },
-        });
-
-        Container.appendChild(this.m_event_layer_element);
-
         document.addEventListener('contextmenu', e => e?.cancelable && e.preventDefault());
-
-        this.m_event_layer_element.addEventListener("mousedown", (e) => this.canvasMouseDown(e));
-        this.m_event_layer_element.addEventListener("mouseup", (e) => this.canvasMouseUp(e));
-        this.m_event_layer_element.addEventListener("mousemove", (e) => this.canvasMouseMove(e));
-
-        document.body.addEventListener("keydown", (e) => this.canvasKeyDown(e));
-        document.body.addEventListener("keyup", (e) => this.canvasKeyUp(e));
 
         this.m_resize_ticktock = new TickTock(this.handleResize, 500);
 
@@ -233,72 +210,6 @@ class Renderer {
             CANVAS.Context2d!.setTransform(1, 0, 0, 1, 0, 0);
             CANVAS.Context2d!.clearRect(0, 0, CANVAS.Context2d.canvas.width, CANVAS.Context2d.canvas.height);
         }
-    }
-
-    private canvasMouseDown(e: MouseEvent): void {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (e.which === 1 || e.button === 0) {
-            this.m_input_state.MouseLeftDown = true;
-        }
-
-        if (e.which === 2 || e.button === 1) {
-            this.m_input_state.MouseMiddleDown = true;
-        }
-
-        if (e.which === 3 || e.button === 2) {
-            this.m_input_state.MouseRightDown = true;
-        }
-
-        // if (e.which === 4 || e.button === 3) {
-        //     console.log('"Back" at ' + e.clientX + 'x' + e.clientY);
-        // }
-
-        // if (e.which === 5 || e.button === 4) {
-        //     console.log('"Forward" at ' + e.clientX + 'x' + e.clientY);
-        // }
-    }
-
-    private canvasMouseUp(e: MouseEvent): void {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (e.which === 1 || e.button === 0) {
-            this.m_input_state.MouseLeftDown = false;
-        }
-
-        if (e.which === 2 || e.button === 1) {
-            this.m_input_state.MouseMiddleDown = false;
-        }
-
-        if (e.which === 3 || e.button === 2) {
-            this.m_input_state.MouseRightDown = false;
-        }
-
-        // if (e.which === 4 || e.button === 3) {
-        //     console.log('"Back" at ' + e.clientX + 'x' + e.clientY);
-        // }
-
-        // if (e.which === 5 || e.button === 4) {
-        //     console.log('"Forward" at ' + e.clientX + 'x' + e.clientY);
-        // }
-    }
-
-    private canvasMouseMove(e: MouseEvent): void {
-        e.preventDefault();
-        e.stopPropagation();
-
-        this.m_input_state.MousePositionCamera.x = ((e.clientX - this.m_config.Canvas.x) * this.m_config.Scale);
-        this.m_input_state.MousePositionCamera.y = ((e.clientY - this.m_config.Canvas.y) * this.m_config.Scale);
-    }
-
-    private canvasKeyDown(e: KeyboardEvent): void {
-        this.m_input_state.KeyboardKeyDown[e.code] = true;
-    }
-
-    private canvasKeyUp(e: KeyboardEvent): void {
-        delete this.m_input_state.KeyboardKeyDown[e.code];
     }
 
     private updateCanvasStack(): void {

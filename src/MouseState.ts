@@ -1,6 +1,8 @@
 import { Vec2 } from "gl-matrix";
+import MouseStateInterface from "./Interfaces/MouseStateInterface";
+import MouseMutatorInterface from "./Interfaces/MouseMutatorInterface";
 
-class MouseState {
+class MouseState implements MouseStateInterface, MouseMutatorInterface {
     private m_position_camera: Vec2;
     private m_position_world: Vec2;
     private m_left_down: boolean;
@@ -33,6 +35,26 @@ class MouseState {
 
     public get RightDown(): boolean {
         return this.m_right_down;
+    }
+
+    public SetLeftDown(value: boolean): void {
+        this.m_left_down = value;
+    }
+
+    public SetMiddleDown(value: boolean): void {
+        this.m_middle_down = value;
+    }
+
+    public SetRightDown(value: boolean): void {
+        this.m_right_down = value;
+    }
+
+    public SetCameraX(value: number): void {
+        this.m_position_camera.x = value;
+    }
+
+    public SetCameraY(value: number): void {
+        this.m_position_camera.y = value;
     }
 }
 
