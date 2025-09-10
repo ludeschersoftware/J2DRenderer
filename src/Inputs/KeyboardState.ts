@@ -1,5 +1,5 @@
-import KeyboardMutatorInterface from "./Interfaces/KeyboardMutatorInterface";
-import KeyboardStateInterface from "./Interfaces/KeyboardStateInterface";
+import KeyboardMutatorInterface from "./types/KeyboardMutatorInterface";
+import KeyboardStateInterface from "./types/KeyboardStateInterface";
 
 class KeyboardState implements KeyboardStateInterface, KeyboardMutatorInterface {
     private m_pressed_keys: Map<string, boolean>;

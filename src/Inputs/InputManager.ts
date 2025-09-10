@@ -1,13 +1,13 @@
 import { appendElement } from "@ludeschersoftware/dom";
-import StateWithMutator from "../StateWithMutator";
-import MouseStateInterface from "../Interfaces/MouseStateInterface";
-import MouseState from "../MouseState";
-import KeyboardStateInterface from "../Interfaces/KeyboardStateInterface";
-import KeyboardState from "../KeyboardState";
-import { KeyboardMutator, MouseMutator } from "../InternalSymbols";
-import MouseMutatorInterface from "../Interfaces/MouseMutatorInterface";
-import KeyboardMutatorInterface from "../Interfaces/KeyboardMutatorInterface";
 import GlobalConfigInterface from "../Interfaces/GlobalConfigInterface";
+import MouseStateInterface from "./types/MouseStateInterface";
+import StateWithMutator from "./StateWithMutator";
+import MouseState from "./MouseState";
+import MouseMutatorInterface from "./types/MouseMutatorInterface";
+import KeyboardStateInterface from "./types/KeyboardStateInterface";
+import KeyboardMutatorInterface from "./types/KeyboardMutatorInterface";
+import KeyboardState from "./KeyboardState";
+import { KeyboardMutator, MouseMutator } from "./InternalSymbols";
 
 class InputManager {
     protected readonly m_config: GlobalConfigInterface;

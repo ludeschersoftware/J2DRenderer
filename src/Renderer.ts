@@ -1,6 +1,4 @@
-import TickTock from "@ludeschersoftware/ticktock";
 import { createElement } from "@ludeschersoftware/dom";
-import RendererEventType from "./Enum/RendererEventType";
 import AbstractComponent from "./Abstract/AbstractComponent";
 import { Mat3, Vec2 } from "gl-matrix";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
@@ -11,7 +9,8 @@ import EventHub from "./EventHub";
 import LogLog from "./Logger";
 import SceneManager from "./Manager/SceneManager";
 import AbstractScene from "./Abstract/AbstractScene";
-import InputManager from "./Manager/InputManager";
+import BlankWindow from "./BlankWindow";
+import InputManager from "./Inputs/InputManager";
 
 class Renderer {
     protected m_config: GlobalConfigInterface;
@@ -19,15 +18,13 @@ class Renderer {
     protected m_now: number;
     protected m_canvas_stack: Map<number, CanvasInterface>;
     protected m_input_manager: InputManager;
-    protected m_resize_ticktock: TickTock;
+    protected m_blank_window: BlankWindow;
 
     constructor(config: InitConfigInterface) {
         initializeConfig();
 
         const { Container, Id, Logger, ...rest } = config;
         const CONTAINER_RECT: DOMRect = Container.getBoundingClientRect();
-
-        //  Camera: new Canvas2DCamera(new Vec2(Container.clientWidth, Container.clientHeight)),
 
         this.m_config = Object.assign({
             Id,
@@ -46,18 +43,11 @@ class Renderer {
         this.m_now = 0;
         this.m_canvas_stack = new Map();
         this.m_input_manager = new InputManager(Container, this.m_config);
+        this.m_blank_window = new BlankWindow(Container, this.m_config);
 
         setConfig(Id, this.m_config);
 
         document.addEventListener('contextmenu', e => e?.cancelable && e.preventDefault());
-
-        this.m_resize_ticktock = new TickTock(this.handleResize, 500);
-
-        (new ResizeObserver(() => {
-            this.m_resize_ticktock.run();
-        })).observe(Container);
-
-        this.handleResize();
     }
 
     public SetLoadingScene = (scene: AbstractScene): void => this.m_scene_manager.SetLoadingScene(scene);
@@ -297,29 +287,6 @@ class Renderer {
             }
         }
     }
-
-    private handleResize = (): void => {
-        this.m_config.EventHub.send(RendererEventType.BeforeResizeReInitialization, this.m_scene_manager.activeScene?.Id);
-
-        const CONTAINER_RECT: DOMRect = this.m_config.Container.getBoundingClientRect();
-
-        this.m_config.Canvas.width = this.m_config.Container.offsetWidth;
-        this.m_config.Canvas.height = this.m_config.Container.offsetHeight;
-        this.m_config.Canvas.x = CONTAINER_RECT.x;
-        this.m_config.Canvas.y = CONTAINER_RECT.y;
-        this.m_config.Scale = 1;
-
-        this.m_event_layer_element!.style.width = `${this.m_config.Container.offsetWidth}px`;
-        this.m_event_layer_element!.style.height = `${this.m_config.Container.offsetHeight}px`;
-
-        if (this.m_config.Camera !== undefined) {
-            this.m_config.Camera!.ResizeCanvas(new Vec2(this.m_config.Container.clientWidth, this.m_config.Container.clientHeight));
-        }
-
-        this.optimizeCanvas();
-
-        this.m_config.EventHub.send(RendererEventType.AfterResizeReInitialization, this.m_scene_manager.activeScene?.Id);
-    };
 }
 
 export default Renderer;

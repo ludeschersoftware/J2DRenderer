@@ -1,6 +1,6 @@
 import { Vec2 } from "gl-matrix";
-import MouseStateInterface from "./Interfaces/MouseStateInterface";
-import MouseMutatorInterface from "./Interfaces/MouseMutatorInterface";
+import MouseStateInterface from "./types/MouseStateInterface";
+import MouseMutatorInterface from "./types/MouseMutatorInterface";
 
 class MouseState implements MouseStateInterface, MouseMutatorInterface {
     private m_position_camera: Vec2;
