@@ -8,6 +8,7 @@ import KeyboardStateInterface from "./types/KeyboardStateInterface";
 import KeyboardMutatorInterface from "./types/KeyboardMutatorInterface";
 import KeyboardState from "./KeyboardState";
 import { KeyboardMutator, MouseMutator } from "./InternalSymbols";
+import { Vec2 } from "gl-matrix";
 
 class InputManager {
     protected readonly m_config: GlobalConfigInterface;
@@ -49,6 +50,22 @@ class InputManager {
 
     public get Keyboard(): KeyboardStateInterface {
         return this.m_keyboard.public;
+    }
+
+    public Update(): void {
+        this.m_input_state.MousePositionWorld.x = 0;
+        this.m_input_state.MousePositionWorld.y = 0;
+
+        if (this.m_config.Camera !== undefined) {
+            Vec2.copy(this.m_input_state.MousePositionWorld, this.m_config.Camera!.ViewportToWorld(this.m_input_state.MousePositionCamera));
+        }
+    }
+
+    public Reset(): void {
+        this.m_input_state.MouseLeftDown = false;
+        this.m_input_state.MouseMiddleDown = false;
+        this.m_input_state.MouseRightDown = false;
+        this.m_input_state.KeyboardKeyDown = {};
     }
 
     private canvasMouseDown = (e: MouseEvent): void => {

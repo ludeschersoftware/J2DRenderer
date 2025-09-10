@@ -29,6 +29,14 @@ abstract class AbstractScene {
         yield* this.m_layers;
     }
 
+    public *ReverseLayers(): Generator<SceneLayer> {
+        yield* this.m_layers.IterateReverse();
+    }
+
+    public get layerCount(): number {
+        return this.m_layers.Count;
+    }
+
     protected AddLayer(layer: SceneLayer): void {
         this.m_layers.Add(layer);
     }

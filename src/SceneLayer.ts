@@ -20,6 +20,10 @@ class SceneLayer {
         yield* this.m_components;
     }
 
+    public *ReverseComponents(): Generator<AbstractComponent> {
+        yield* this.m_components.IterateReverse();
+    }
+
     public Draw(): void {
         for (const component of this.m_components) {
             component.Draw(this.m_backend, 0);

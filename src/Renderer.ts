@@ -1,6 +1,6 @@
 import { createElement } from "@ludeschersoftware/dom";
 import AbstractComponent from "./Abstract/AbstractComponent";
-import { Mat3, Vec2 } from "gl-matrix";
+import { Mat3 } from "gl-matrix";
 import GlobalConfigInterface from "./Interfaces/GlobalConfigInterface";
 import CanvasInterface from "./Interfaces/CanvasInterface";
 import InitConfigInterface from "./Interfaces/InitConfigInterface";
@@ -11,12 +11,14 @@ import SceneManager from "./Manager/SceneManager";
 import AbstractScene from "./Abstract/AbstractScene";
 import BlankWindow from "./BlankWindow";
 import InputManager from "./Inputs/InputManager";
+import RenderTime from "./RenderTime";
+import CanvasManager from "./Manager/CanvasManager";
 
 class Renderer {
     protected m_config: GlobalConfigInterface;
     protected m_scene_manager: SceneManager;
-    protected m_now: number;
-    protected m_canvas_stack: Map<number, CanvasInterface>;
+    protected m_render_time: RenderTime;
+    protected m_canvas_manager: CanvasManager;
     protected m_input_manager: InputManager;
     protected m_blank_window: BlankWindow;
 
@@ -26,22 +28,24 @@ class Renderer {
         const { Container, Id, Logger, ...rest } = config;
         const CONTAINER_RECT: DOMRect = Container.getBoundingClientRect();
 
-        this.m_config = Object.assign({
-            Id,
-            Container,
-            Viewport: {
-                width: Container.offsetWidth,
-                height: Container.offsetHeight,
-                x: CONTAINER_RECT.x,
-                y: CONTAINER_RECT.y,
-            },
-            Scale: 1,
-            EventHub: new EventHub(Container),
-            Logger: new LogLog(Logger),
-        }, rest);
+        this.m_config = {
+            ...{
+                Id,
+                Container,
+                Viewport: {
+                    width: Container.offsetWidth,
+                    height: Container.offsetHeight,
+                    x: CONTAINER_RECT.x,
+                    y: CONTAINER_RECT.y,
+                },
+                Scale: 1,
+                EventHub: new EventHub(Container),
+                Logger: new LogLog(Logger),
+            }, ...rest
+        };
         this.m_scene_manager = new SceneManager(this.m_config);
-        this.m_now = 0;
-        this.m_canvas_stack = new Map();
+        this.m_render_time = new RenderTime();
+        this.m_canvas_manager = new CanvasManager();
         this.m_input_manager = new InputManager(Container, this.m_config);
         this.m_blank_window = new BlankWindow(Container, this.m_config);
 
@@ -50,9 +54,17 @@ class Renderer {
         document.addEventListener('contextmenu', e => e?.cancelable && e.preventDefault());
     }
 
-    public SetLoadingScene = (scene: AbstractScene): void => this.m_scene_manager.SetLoadingScene(scene);
-    public RegisterScene = (scene: AbstractScene): void => this.m_scene_manager.RegisterScene(scene);
-    public IsSceneRegistered = (scene_id: string): boolean => this.m_scene_manager.IsSceneRegistered(scene_id);
+    public SetLoadingScene(scene: AbstractScene): void {
+        this.m_scene_manager.SetLoadingScene(scene);
+    }
+
+    public RegisterScene(scene: AbstractScene): void {
+        this.m_scene_manager.RegisterScene(scene);
+    }
+
+    public IsSceneRegistered(scene_id: string): boolean {
+        return this.m_scene_manager.IsSceneRegistered(scene_id);
+    }
 
     public async RunAsync(scene_id: string): Promise<void> {
         this.clearContext2ds();
@@ -71,42 +83,35 @@ class Renderer {
 
         this.m_now = now;
 
-        if (this.m_scene_manager.activeScene!.Layers.length !== this.m_canvas_stack.length) {
+        /**
+         * Check Canvas state
+         */
+
+        if (this.m_scene_manager.activeScene!.layerCount !== this.m_canvas_manager.stackCount) {
             this.updateCanvasStack();
         }
+
+        /**
+         * Update Input state
+         */
+
+        this.m_input_manager.Update();
 
         /**
          * Update all Components in reverse order
          */
 
-        this.m_input_state.MousePositionWorld.x = 0;
-        this.m_input_state.MousePositionWorld.y = 0;
-
-        if (this.m_config.Camera !== undefined) {
-            Vec2.copy(this.m_input_state.MousePositionWorld, this.m_config.Camera!.ViewportToWorld(this.m_input_state.MousePositionCamera));
-        }
-
-        let tmp_index: number = this.m_scene_manager.activeScene!.Layers.length - 1;
-
-        for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = this.m_scene_manager.activeScene!.Layers[tmp_index].components;
-
-            let tmp_inner_index: number = COMPONENTS.length - 1;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.updateComponent(COMPONENTS[tmp_inner_index], DELTA_TIME, this.m_input_state);
-
-                tmp_inner_index--;
+        for (const layer of this.m_scene_manager.activeScene!.ReverseLayers()) {
+            for (const component of layer.ReverseComponents()) {
+                this.updateComponent(component, DELTA_TIME, this.m_input_state);
             }
-
-            tmp_index--;
         }
 
         /**
          * Draw all Components
          */
 
-        this.clearContext2ds(); // TODO => only call .clearContext2ds() if the first .drawComponent() returns void|undefined => otherwise we "cache" the rendered context.
+        this.clearContext2ds();
 
         if (this.m_config.Camera !== undefined) {
             for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
@@ -123,19 +128,14 @@ class Renderer {
             }
         }
 
-        for (let x = 0; x < this.m_scene_manager.activeScene!.Layers.length; x++) {
-            const COMPONENTS: AbstractComponent[] = this.m_scene_manager.activeScene!.Layers[x].components;
-
-            for (let y = 0; y < COMPONENTS.length; y++) {
-                this.drawComponent(COMPONENTS[y], this.m_canvas_stack[x]!.Context2d, DELTA_TIME);
+        for (const layer of this.m_scene_manager.activeScene!.Layers()) {
+            for (const component of layer.Components()) {
+                this.drawComponent(component, this.m_canvas_stack[x]!.Context2d, DELTA_TIME);
             }
         }
 
         if (this.m_scene_manager.moveToNextScene()) {
-            this.m_input_state.MouseLeftDown = false;
-            this.m_input_state.MouseMiddleDown = false;
-            this.m_input_state.MouseRightDown = false;
-            this.m_input_state.KeyboardKeyDown = {};
+            this.m_input_manager.Reset();
         }
 
         requestAnimationFrame(this.renderLoop);
@@ -257,34 +257,18 @@ class Renderer {
     }
 
     private updateComponent(component: AbstractComponent, deltaTime: number, inputManager: InputManager): false | void {
-        if (component.Update(deltaTime, inputState) === false) {
-            return false;
-        }
+        component.Update(deltaTime, inputState);
 
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        let tmp_index: number = COMPONENT_CHILDREN.length - 1;
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            if (this.updateComponent(COMPONENT_CHILDREN[tmp_index], deltaTime, inputState) === false) {
-                return false;
-            }
-
-            tmp_index--;
+        for (const child of component.ReverseComponents()) {
+            this.updateComponent(child, deltaTime, inputState);
         }
     }
 
     private drawComponent(component: AbstractComponent, context: CanvasRenderingContext2D, deltaTime: number): false | void {
-        if (component.Draw(context, deltaTime) === false) {
-            return false;
-        }
+        component.Draw(context, deltaTime);
 
-        const COMPONENT_CHILDREN: AbstractComponent[] = component.GetComponents();
-
-        for (let z = 0; z < COMPONENT_CHILDREN.length; z++) {
-            if (this.drawComponent(COMPONENT_CHILDREN[z], context, deltaTime) === false) {
-                return false;
-            }
+        for (const child of component.ReverseComponents()) {
+            this.drawComponent(child, context, deltaTime);
         }
     }
 }

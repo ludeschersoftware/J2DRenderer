@@ -3,7 +3,7 @@ import { Box, Optional, Size, Vector2 } from "@ludeschersoftware/types";
 import ContentManager from "../Manager/ContentManager";
 import ContextInterface from "../Interfaces/ContextInterface";
 import RenderTime from "../RenderTime";
-import InputManager from "../Manager/InputManager";
+import InputManager from "../Inputs/InputManager";
 
 abstract class AbstractComponent implements Box {
     private m_box: Box;
@@ -80,6 +80,10 @@ abstract class AbstractComponent implements Box {
 
     public *Components(): Generator<AbstractComponent> {
         yield* this.m_child_components;
+    }
+
+    public *ReverseComponents(): Generator<AbstractComponent> {
+        yield* this.m_child_components.IterateReverse();
     }
 
     protected addComponent(component: AbstractComponent): void {
